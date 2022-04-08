@@ -1,0 +1,94 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600&display=swap');
+body {
+    display: none;
+    background-color: transparent;
+}
+#app {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+
+    width: 500px;
+    height: 600px;
+
+    background-color: rgba(0, 0, 0, 0.774);
+
+    border-radius: 20px;
+    border: 5px solid white;
+    
+    overflow: auto;
+    font-family: 'Nunito', sans-serif;
+    color: white;
+    text-align: center;
+
+    padding: 10px 10px 10px 10px;
+}
+
+.close-btn {
+    position: absolute;
+    top: 15px; 
+    right: 15px; 
+    font-size: 1.5rem;
+    color: white;
+    transition: all 1s;
+}
+.close-btn:hover {
+    color: black;
+}
+
+.form-check-input {
+    background-color: transparent!important;
+    border: 1px solid white;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e")!important;
+}
+.form-check-input:checked {
+    background-color: transparent!important;
+    border: 1px solid white;
+}
+
+.label {
+    margin-top: 20px;
+}
+
+.centered {
+    justify-content: center;
+    display: flex;
+    flex-wrap: wrap;
+}
+.form-control {
+    width: 70%;
+    background-color:  transparent!important;
+    color: white!important;
+    text-align:center;
+}
+.form-control::placeholder {
+    color: white!important;
+    opacity: 1;
+}
+.update-btn {
+    margin-top: 10px;
+    color: white;
+    border: 1px solid white;
+    transition: all 1s;
+}
+.update-btn:hover {
+    color: black;
+    border: 1px solid black;
+}
+
+.player-table {
+    margin-top: 15px;
+    width: 90%;
+}
+.table-label {
+    font-size: 120%;
+}
+.player {
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+::-webkit-scrollbar {
+    display: none;
+}

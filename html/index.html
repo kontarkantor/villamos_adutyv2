@@ -1,0 +1,173 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+        
+        <link rel="stylesheet" href="style.css">
+        
+    </head>
+    <body>
+		<div id='app'>
+            <div id="appheader">
+                <h1>ADMIN DUTY</h1>
+            </div>
+
+            <button class="btn close-btn" @click="close()"><i class="bi bi-x-circle"></i></button>
+
+            <div class="container">
+                <div class="row">
+                    <div class="col">
+                        <label></label><i class="bi bi-shield-shaded"></i> Rangod</label>
+                    </div>
+                    <div class="col">
+                        <label>{{state.group}}</label>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <label></label><i class="bi bi-people"></i> Játékosok</label>
+                    </div>
+                    <div class="col">
+                        <label>{{players.length}}</label>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <label><i class="bi bi-award"></i> Duty</label>
+                    </div>
+                    <div class="col">
+                        <div class="form-switch">
+                            <input class="form-check-input" type="checkbox" v-model="state.duty" @change="duty()">
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <label><i class="bi bi-balloon"></i> Admin Tag</label>
+                    </div>
+                    <div class="col">
+                        <div class="form-switch">
+                            <input class="form-check-input" type="checkbox" v-model="state.tag" @change="tag()" :disabled="state.duty == false">
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <label><i class="bi bi-fingerprint"></i> ID-k</label>
+                    </div>
+                    <div class="col">
+                        <div class="form-switch">
+                            <input class="form-check-input" type="checkbox" v-model="state.ids" @change="ids()" :disabled="state.duty == false">
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <label><i class="bi bi-heart"></i> Halhatatlanság</label>
+                    </div>
+                    <div class="col">
+                        <div class="form-switch">
+                            <input class="form-check-input" type="checkbox" v-model="state.god" @change="god()" :disabled="state.duty == false">
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <label><i class="bi bi-capslock"></i> Gyorsaság</label>
+                    </div>
+                    <div class="col">
+                        <div class="form-switch">
+                            <input class="form-check-input" type="checkbox" v-model="state.speed" @change="speed()" :disabled="state.duty == false">
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <label><i class="bi bi-binoculars"></i> Láthatatlanság</label>
+                    </div>
+                    <div class="col">
+                        <div class="form-switch">
+                            <input class="form-check-input" type="checkbox" v-model="state.invisible" @change="invisible()" :disabled="state.duty == false">
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <label><i class="bi bi-cart"></i> No Ragdoll</label>
+                    </div>
+                    <div class="col">
+                        <div class="form-switch">
+                            <input class="form-check-input" type="checkbox" v-model="state.noragdoll" @change="noragdoll()" :disabled="state.duty == false">
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <label><i class="bi bi-clipboard-minus"></i> Koordináták</label>
+                    </div>
+                    <div class="col">
+                        <label style="text-decoration: underline;" @click="coords()">másolás</label>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <label><i class="bi bi-heart"></i> Élet</label>
+                    </div>
+                    <div class="col">
+                        <label style="text-decoration: underline;" @click="heal()">heal</label>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <label><i class="bi bi-geo-alt"></i> Marker</label>
+                    </div>
+                    <div class="col">
+                        <label style="text-decoration: underline;" @click="marker()">teleport</label>
+                    </div>
+                </div>
+            </div>
+
+            <h2 class="label">JÁTÉKOSOK</h2>
+
+            <div class="centered">
+                <input type="text" v-model="search" class="form-control" placeholder="játékos neve, rangja, idje vagy munkája" aria-describedby="addon-wrapping">
+            </div>
+            <button type="button" class="btn update-btn" @click="update()"><i class="bi bi-arrow-repeat"></i> Frissítés</button>
+            
+            <div class="container player-table">
+                <div class="row border-bottom table-label">
+                    <div class="col-sm">
+                        ID
+                    </div>
+                    <div class="col-md">
+                        Név
+                    </div>
+                    <div class="col">
+                        Rang
+                    </div>
+                    <div class="col">
+                        Munka
+                    </div>
+                </div>
+                <div class="row border-bottom player" v-for="player in filteredList">
+                    <div class="col-sm">
+                        {{player.id}}
+                    </div>
+                    <div class="col-md">
+                        {{player.name}}
+                    </div>
+                    <div class="col">
+                        {{player.group}}
+                    </div>
+                    <div class="col">
+                        {{player.job}}
+                    </div>
+                </div>
+            </div>
+		</div>
+
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.2.31/vue.global.prod.min.js"></script>
+        <script src="index.js"></script>
+
+	</body>
+</html>
