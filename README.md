@@ -6,18 +6,18 @@ Ha van beállított webhook, akkor discordra folyamatosan logolja a duty ki/bel�
 # Megnyitás
 Alapból O-val lehet megnyitni a panelt, de beállításokba bindelhető!
 # Parancsok
-/admenu
-A többi parancs ki/bekapcsolható configba.
-/adduty
-/adtag
-/adids
-/adgod
-/adspeed
-/adinvisible
-/adnoragdoll
-/adcoords
-/adheal
-/admarker
+/admenu<br/>
+A többi parancs ki/bekapcsolható configba.<br/>
+/adduty<br/>
+/adtag<br/>
+/adids<br/>
+/adgod<br/>
+/adspeed<br/>
+/adinvisible<br/>
+/adnoragdoll<br/>
+/adcoords<br/>
+/adheal<br/>
+/admarker<br/>
 # Előnézet
 [YouTube](https://youtu.be/nnhGEO0Rd60)
 # Marvel Studios
