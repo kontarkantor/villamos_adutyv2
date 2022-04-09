@@ -126,7 +126,22 @@ AddEventHandler('villamos_aduty:setDutya', function(enable)
     end 
 end)
 
+AddEventHandler('playerDropped', function(reason)
+    local xPlayer = ESX.GetPlayerFromId(source)
+    if inDuty[xPlayer.source] then 
+        if tags[xPlayer.source] then 
+            tags[xPlayer.source] = nil
+            TriggerClientEvent("villamos_aduty:sendData", -1, tags)
+        end 
+        local dutyMinutes = math.floor((os.time() - inDuty[xPlayer.source].start) / 60)
+        inDuty[xPlayer.source] = nil
+        TriggerClientEvent("villamos_aduty:notify", -1, GetPlayerName(xPlayer.source).." kilépett a szolgálatból!")
 
+        dutyTimes[xPlayer.identifier] = (dutyTimes[xPlayer.identifier] or 0) + dutyMinutes
+        SaveResourceFile(GetCurrentResourceName(), "data.json", json.encode(dutyTimes), -1)
+        LogToDiscord(GetPlayerName(xPlayer.source), false, FormatMinutes(dutyTimes[xPlayer.identifier] or 0), FormatMinutes(dutyMinutes))
+    end
+end)
 
 RegisterNetEvent('esx:playerLoaded')
 AddEventHandler('esx:playerLoaded', function(playerData)
