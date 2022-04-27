@@ -45,11 +45,15 @@ RegisterNUICallback('exit', function(data, cb)
 end)
 
 RegisterNUICallback('update', function(data, cb)
-    ESX.TriggerServerCallback("villamos_aduty:getPlayers", function(data) 
-        SendNUIMessage({
-            type = "setplayers",
-            players = data
-        })
+    ESX.TriggerServerCallback("villamos_aduty:openPanel", function(allow, _group, players) 
+        if allow then 
+            SendNUIMessage({
+                type = "setplayers",
+                players = players
+            })
+            group = _group 
+            UpdateNui()
+        end
     end)
     UpdateNui()
     cb('ok')
