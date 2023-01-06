@@ -1,9 +1,6 @@
 local inDuty = {} 
 local tags = {}
 local dutyTimes = json.decode(LoadResourceFile(GetCurrentResourceName(), "data.json"))
-ESX = nil
-
-TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
 
 function GetPlayerDiscord(playId)
     local identifiers = GetPlayerIdentifiers(playId)
@@ -128,7 +125,7 @@ end)
 
 AddEventHandler('playerDropped', function(reason)
     local xPlayer = ESX.GetPlayerFromId(source)
-    if inDuty[xPlayer.source] then 
+    if xPlayer and inDuty[xPlayer.source] then 
         if tags[xPlayer.source] then 
             tags[xPlayer.source] = nil
             TriggerClientEvent("villamos_aduty:sendData", -1, tags)
