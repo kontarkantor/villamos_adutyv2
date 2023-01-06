@@ -15,6 +15,8 @@ files {
   	'html/style.css'
 }
 
+shared_script '@es_extended/imports.lua'
+
 server_scripts {
 	'config.lua',
 	'server.lua'
