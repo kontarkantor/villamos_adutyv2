@@ -381,16 +381,18 @@ end
 
 CreateThread(function()
     while true do
-        Wait(3)
+	local sleep = 500
         for id, data in pairs(adminok) do
             local lid = GetPlayerFromServerId(id)
             local pped = GetPlayerPed(lid)
             if playerids[lid] then
+		sleep = 1
                 local x, y, z = table.unpack(GetEntityCoords(pped))
                 DrawText3D(x, y, z+1.0, data.label, data.color.r, data.color.g, data.color.b, 0.5)
                 DrawMarker(9, x, y, z+1.45, 0.0, 0.0, 0.0, 90.0, 90.0, 0.0, 1.0, 1.0, 1.0, 255, 255, 255, 255, true, false, 2, true, "duty", data.logo, false)
             end
         end
+	Wait(sleep)
     end
 end)
 
