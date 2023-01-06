@@ -1,4 +1,3 @@
-ESX = nil
 local adminok = {}
 local playerids = {}
 local isInUi = false
@@ -126,12 +125,7 @@ function UpdateNui()
     })
 end 
 
-Citizen.CreateThread(function()
-    while ESX == nil do
-		TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
-		Citizen.Wait(0)
-	end
-
+CreateThread(function()
     local txd = CreateRuntimeTxd("duty")
 	for _, v in pairs(Config.Icons) do
 		CreateRuntimeTextureFromImage(txd, v, "icons/"..v..".png")
@@ -237,12 +231,12 @@ function ToggleGod(state, noti)
         if noti then 
             notify("Halhatatlanság ".. (god and "bekapcsolva" or "kikapcsolva"), (god and "green" or "red"))
         end 
-        Citizen.CreateThread(function()
+        CreateThread(function()
             while god do
-                Citizen.Wait(1000)
-                local ped = PlayerPedId()
-                if not GetPlayerInvincible(PlayerPedId()) then 
-                    SetPlayerInvincible(PlayerPedId(), true)
+                Wait(1000)
+                local player = PlayerId()
+                if not GetPlayerInvincible(player) then 
+                    SetPlayerInvincible(player, true)
                 end
             end
         end)
@@ -271,12 +265,12 @@ function ToggleIds(state, noti)
         if noti then 
             notify("ID-k ".. (ids and "bekapcsolva" or "kikapcsolva"), (ids and "green" or "red"))
         end 
-        Citizen.CreateThread(function()
+        CreateThread(function()
             while ids do
-                Citizen.Wait(3)
+                Wait(3)
                 for id = 0, 256 do
                     if NetworkIsPlayerActive(id) and playerids[id] then
-                        pped = GetPlayerPed(id)
+                        local pped = GetPlayerPed(id)
                         local x, y, z = table.unpack(GetEntityCoords(pped))
                         DrawText3D(x, y, z, "["..GetPlayerServerId(id).."] "..GetPlayerName(id).."~n~❤️: "..GetEntityHealth(pped), 255, 255, 255, 0.3)
                     end  
@@ -296,9 +290,9 @@ function ToggleSpeed(state, noti)
         if noti then 
             notify("Gyorsaság ".. (speed and "bekapcsolva" or "kikapcsolva"), (speed and "green" or "red"))
         end 
-        Citizen.CreateThread(function()
+        CreateThread(function()
             while speed do
-                Citizen.Wait(0)
+                Wait(0)
                 SetSuperJumpThisFrame(PlayerId())
             end
         end)
@@ -349,7 +343,7 @@ end
 
 function ActionHeal() 
     if duty then 
-        local ped = GetPlayerPed(-1)
+        local ped = PlayerPedId()
         TriggerEvent('esx_status:set', 'hunger', 1000000)
         TriggerEvent('esx_status:set', 'thirst', 1000000)
         SetEntityHealth(ped, GetEntityMaxHealth(ped))
@@ -374,7 +368,7 @@ function ActionMarker()
                     break
                 end
 
-                Citizen.Wait(5)
+                Wait(5)
             end
             notify("Elteleportálva!", "green")
         else
@@ -385,9 +379,9 @@ function ActionMarker()
     end 
 end 
 
-Citizen.CreateThread(function()
+CreateThread(function()
     while true do
-        Citizen.Wait(3)
+        Wait(3)
         for id, data in pairs(adminok) do
             local lid = GetPlayerFromServerId(id)
             local pped = GetPlayerPed(lid)
@@ -403,12 +397,12 @@ end)
 Citizen.CreateThread(function()
     while true do
         Citizen.Wait(1000)
-        local ped = GetPlayerPed(-1)
+        local ped = PlayerPedId()
         local coords = GetEntityCoords(ped, true)
         for id = 0, 256 do
             if NetworkIsPlayerActive(id) then
                 local pped = GetPlayerPed(id)
-                if GetDistanceBetweenCoords(coords, GetEntityCoords(pped), true) < 20 then 
+                if #(coords - GetEntityCoords(GetPlayerPed(id))) < 20 then 
                     playerids[id] = true
                 else
                     playerids[id] = false
