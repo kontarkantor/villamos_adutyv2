@@ -1,3 +1,6 @@
+Config.BotToken = "" --NE RAKD ELÉ A Bot szót!!!!! csak a token amit kimásolsz!!
+Config.Webhook = nil
+
 local inDuty = {} 
 local tags = {}
 local dutyTimes = json.decode(LoadResourceFile(GetCurrentResourceName(), "data.json"))
