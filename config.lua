@@ -1,4 +1,4 @@
-Config = {} --FIGYELEM! A webhookot a server.lua-ban lehet megadni
+Config = {} --FIGYELEM! A webhookot és a bot tokent a server.lua-ban lehet megadni
 
 Config.Commands = true
 
@@ -14,5 +14,4 @@ Config.Admins = { --a pedet ha nem szeretnéd használni állítsd falsera
 
 Config.DiscordTags = false
 Config.GuildId = ""
-Config.BotToken = "" --NE RAKD ELÉ A Bot szót!!!!! csak a token amit kimásolsz!!!
 Config.DiscordTimeOut = 1500
