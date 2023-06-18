@@ -1,9 +1,9 @@
 const App = Vue.createApp({
     data() {
       return {
+        opened : false,
         players : [
             {id:1, name:"6osvillamos", group:"admin", job:"Rendőr"},
-
         ],
         state : {
             group:"user",
@@ -14,6 +14,28 @@ const App = Vue.createApp({
             speed:false,
             invisible:false,
             noragdoll:false
+        },
+        locales: {
+            nui_label:"ADMIN DUTY PANEL",
+            nui_group:"Your group",
+            nui_players:"Players",
+            nui_duty:"Duty",
+            nui_tag:"Admin tag",
+            nui_esp:"Show IDs",
+            nui_god:"God mode",
+            nui_speed:"Speed",
+            nui_invisble:"Invisible",
+            nui_noragdoll:"No Ragdoll",
+            nui_coords:"Coords",
+            nui_health:"Health",
+            nui_marker:"Marker",
+            nui_label_players:"PLAYERS",
+            nui_players_refresh:"Refresh",
+            nui_players_search:"Search for name, group, ID or job",
+            nui_players_id:"ID",
+            nui_players_name:"Name",
+            nui_players_group:"Group",
+            nui_players_job:"Job",
         },
 
         search : ""
@@ -26,11 +48,44 @@ const App = Vue.createApp({
             const lowsearch = this.search.toLowerCase()
 
             return this.players.filter((player) => {
-                return player.name.toLowerCase().includes(lowsearch) || player.group.toLowerCase() == lowsearch || player.job.toLowerCase() == lowsearch || String(player.id) == lowsearch;
+                return player.name.toLowerCase().includes(lowsearch) || player.group.toLowerCase() == lowsearch || player.job.toLowerCase() == lowsearch || player.id.toString() == lowsearch;
             });
         }
     },
     methods: {
+        onMessage(event) {
+            if (event.data.type == "show") {
+                const appelement = document.getElementById("app");
+                if (event.data.enable) {
+                    appelement.style.display = "block";
+                    appelement.style.animation = "hopin 0.7s";
+                    this.opened = true;
+                } else {
+                    appelement.style.animation = "hopout 0.6s";
+                    this.opened = false;
+                    setTimeout(() => {
+                        if (!this.opened) appelement.style.display = "none";
+                    }, 500);
+                }
+            } else if (event.data.type == "setplayers") {
+                this.players = event.data.players;
+            } 
+            else if (event.data.type == "setstate") {
+                this.state = event.data.state;
+            }
+            else if (event.data.type == "copy") {
+                this.copytoclipboard(event.data.copy);
+            }
+        },
+        copytoclipboard(txt) {
+            var textArea = document.createElement("textarea");
+            textArea.value = txt;
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+        },
         close() {
             fetch(`https://${GetParentResourceName()}/exit`);
         },
@@ -38,6 +93,7 @@ const App = Vue.createApp({
             fetch(`https://${GetParentResourceName()}/update`);
         },
         duty() {
+            this.state.duty = !this.state.duty
             fetch(`https://${GetParentResourceName()}/duty`, {
                 method: 'POST',
                 body: JSON.stringify({
@@ -46,6 +102,7 @@ const App = Vue.createApp({
             });
         },
         tag() {
+            this.state.tag = !this.state.tag
             fetch(`https://${GetParentResourceName()}/tag`, {
                 method: 'POST',
                 body: JSON.stringify({
@@ -54,6 +111,7 @@ const App = Vue.createApp({
             });
         },
         ids() {
+            this.state.ids = !this.state.ids
             fetch(`https://${GetParentResourceName()}/ids`, {
                 method: 'POST',
                 body: JSON.stringify({
@@ -62,6 +120,7 @@ const App = Vue.createApp({
             });
         },
         god() {
+            this.state.god = !this.state.god
             fetch(`https://${GetParentResourceName()}/god`, {
                 method: 'POST',
                 body: JSON.stringify({
@@ -70,6 +129,7 @@ const App = Vue.createApp({
             });
         },
         speed() {
+            this.state.speed = !this.state.speed
             fetch(`https://${GetParentResourceName()}/speed`, {
                 method: 'POST',
                 body: JSON.stringify({
@@ -78,6 +138,7 @@ const App = Vue.createApp({
             });
         },
         invisible() {
+            this.state.invisible = !this.state.invisible
             fetch(`https://${GetParentResourceName()}/invisible`, {
                 method: 'POST',
                 body: JSON.stringify({
@@ -86,6 +147,7 @@ const App = Vue.createApp({
             });
         },
         noragdoll() {
+            this.state.noragdoll = !this.state.noragdoll
             fetch(`https://${GetParentResourceName()}/noragdoll`, {
                 method: 'POST',
                 body: JSON.stringify({
@@ -103,28 +165,11 @@ const App = Vue.createApp({
             fetch(`https://${GetParentResourceName()}/marker`);
         },
     }, 
-    mounted() {
-        var _this = this;
-        window.addEventListener('message', function(event) {
-            if (event.data.type == "show") {
-                document.body.style.display = event.data.enable ? "block" : "none";
-            } else if (event.data.type == "setplayers") {
-                _this.players = event.data.players;
-            } 
-            else if (event.data.type == "setstate") {
-                _this.state = event.data.state;
-            }
-            else if (event.data.type == "copy") {
-                console.log(event.data.copy);
-                var textArea = document.createElement("textarea");
-                textArea.value = event.data.copy;
-                document.body.appendChild(textArea);
-                textArea.focus();
-                textArea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textArea);
-            }
-        });
+    async mounted() {
+        window.addEventListener('message', this.onMessage);
+        var response = await fetch(`https://${GetParentResourceName()}/locales`);
+        var locales = await response.json();
+        this.locales = locales;
     }
 }).mount('#app');
 
