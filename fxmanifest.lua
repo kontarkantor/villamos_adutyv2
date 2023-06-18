@@ -2,28 +2,30 @@ fx_version 'adamant'
 
 game 'gta5'
 
-description 'admin duty by 6osvillamos#0006 v2'
+description 'admin duty by 6osvillamos'
 
-version '1.2.0'
+version '1.2.2'
 
-ui_page('html/index.html') 
+ui_page 'html/index.html'
 
 files {
 	"icons/*.png",
-	'html/index.html',
-  	'html/index.js',
-  	'html/style.css'
+	"html/**"
 }
 
-shared_script '@es_extended/imports.lua'
+shared_scripts {
+	'@es_extended/imports.lua',
+	'config/shared.lua',
+	'@es_extended/locale.lua',
+	'locales/*.lua',
+}
 
 server_scripts {
-	'config.lua',
+	'config/server.lua',
 	'server.lua'
 }
 
 client_scripts {
-	'config.lua',
 	'client.lua'
 }
 

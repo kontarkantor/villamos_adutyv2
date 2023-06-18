@@ -1,5 +1,7 @@
-local adminok = {}
-local playerids = {}
+local admins = {}
+local nearadmins = {}
+local gamertags = {}
+local adminthread = false
 local isInUi = false
 
 local duty = false
@@ -13,20 +15,18 @@ local noragdoll = false
 
 RegisterCommand('admenu', function(s, a, r)
     ESX.TriggerServerCallback("villamos_aduty:openPanel", function(allow, _group, players) 
-        if allow then 
-            SendNUIMessage({
-                type = "setplayers",
-                players = players
-            })
-            group = _group 
-            UpdateNui()
-            SetNuiState(true)
-        else 
-            notify("Nincs hozzá jogosultságod!", "red")
-        end 
+        if not allow then return Config.Notify(_U("no_perm")) end 
+            
+        SendNUIMessage({
+            type = "setplayers",
+            players = players
+        })
+        group = _group 
+        UpdateNui()
+        SetNuiState(true)
     end)
 end)
-RegisterKeyMapping('admenu', 'Open admin menu', 'keyboard', 'o')
+RegisterKeyMapping('admenu', _U("open_menu"), 'keyboard', 'o')
 
 function SetNuiState(state)
     SetNuiFocus(state, state)
@@ -45,22 +45,30 @@ end)
 
 RegisterNUICallback('update', function(data, cb)
     ESX.TriggerServerCallback("villamos_aduty:openPanel", function(allow, _group, players) 
-        if allow then 
-            SendNUIMessage({
-                type = "setplayers",
-                players = players
-            })
-            group = _group 
-            UpdateNui()
-        end
+        if not allow then return SetNuiState(false) end 
+        SendNUIMessage({
+            type = "setplayers",
+            players = players
+        })
+        group = _group 
+        UpdateNui()
     end)
-    UpdateNui()
     cb('ok')
+end)
+
+RegisterNUICallback('locales', function(data, cb)
+    local nuilocales = {}
+    if not Config.Locale or not Locales[Config.Locale] then return print("^1SCRIPT ERROR: Invilaid locales configuartion") end
+    for k, v in pairs(Locales[Config.Locale]) do 
+        if string.find(k, "nui") then 
+            nuilocales[k] = v
+        end 
+    end 
+    cb(nuilocales)
 end)
 
 RegisterNUICallback('duty', function(data, cb)
     TriggerServerEvent('villamos_aduty:setDutya', data.enable)
-    UpdateNui()
     cb('ok')
 end)
 
@@ -125,13 +133,6 @@ function UpdateNui()
     })
 end 
 
-CreateThread(function()
-    local txd = CreateRuntimeTxd("duty")
-	for _, v in pairs(Config.Icons) do
-		CreateRuntimeTextureFromImage(txd, v, "icons/"..v..".png")
-	end
-end)
-
 if Config.Commands then 
     RegisterCommand('adduty', function(s, a, r)
         TriggerServerEvent('villamos_aduty:setDutya', not duty)
@@ -162,7 +163,7 @@ if Config.Commands then
     end)
 
     RegisterCommand('adcoords', function(s, a, r)
-        ActionCoords()
+        ActionCoords(a[1])
     end)
 
     RegisterCommand('adheal', function(s, a, r)
@@ -172,39 +173,46 @@ if Config.Commands then
     RegisterCommand('admarker', function(s, a, r)
         ActionMarker()
     end)
+
+    TriggerEvent('chat:addSuggestion', '/adcoords', _U("command_coords_help"), {
+        { name="type", help="vec3, vec4, obj3, obj4, json3, json4" }
+    })
 end 
 
-
-RegisterNetEvent('villamos_aduty:setDuty')
-AddEventHandler('villamos_aduty:setDuty', function(state, ped)
+RegisterNetEvent('villamos_aduty:setDuty', function(state, group)
+    if not Config.Admins[group] then return end 
     if state then 
         duty = true 
-        if ped then 
-            if IsModelInCdimage(ped) and IsModelValid(ped) then
-                RequestModel(ped)
-                while not HasModelLoaded(ped) do
-                  Citizen.Wait(0)
+        tag = true
+        if Config.Admins[group].ped then 
+            if IsModelInCdimage(Config.Admins[group].ped) and IsModelValid(Config.Admins[group].ped) then
+                RequestModel(Config.Admins[group].ped)
+                while not HasModelLoaded(Config.Admins[group].ped) do
+                    Wait(10)
                 end
-                SetPlayerModel(PlayerId(), ped)
-                SetModelAsNoLongerNeeded(ped)
+                SetPlayerModel(PlayerId(), Config.Admins[group].ped)
+                SetModelAsNoLongerNeeded(Config.Admins[group].ped)
             else 
-                notify("Érvénytelen pedre váltanál!", "red")
+                print("^1WARNING: Invalid ped in config for group: "..group)
             end 
-        end 
-        ToggleTag(true, false)
-        UpdateNui()
-    else 
-        if ped then 
+        elseif Config.Admins[group].cloth then 
             TriggerEvent('skinchanger:getSkin', function(skin)
-                local model = 'mp_m_freemode_01'
-                if skin.sex ~= 0 then
-                    model = 'mp_f_freemode_01'
-                end
-
+                if not skin then return end 
+                --[[local clothes = (skin.sex == 1 and Config.Admins[group].cloth.female or Config.Admins[group].cloth.male)
+                print(json.encode(clothes))
+                TriggerEvent('skinchanger:loadSkin', clothes)]]
+                TriggerEvent('skinchanger:loadClothes', skin, (skin.sex == 1 and Config.Admins[group].cloth.female or Config.Admins[group].cloth.male))
+            end)
+        end 
+    else 
+        if Config.Admins[group].ped then 
+            TriggerEvent('skinchanger:getSkin', function(skin)
+                local model = skin.sex == 1 and `mp_f_freemode_01` or `mp_m_freemode_01`
+                
                 if IsModelInCdimage(model) and IsModelValid(model) then
                     RequestModel(model)
                     while not HasModelLoaded(model) do
-                      Citizen.Wait(0)
+                        Wait(10)
                     end
                     SetPlayerModel(PlayerId(), model)
                     SetModelAsNoLongerNeeded(model)
@@ -212,245 +220,257 @@ AddEventHandler('villamos_aduty:setDuty', function(state, ped)
                     TriggerEvent('esx:restoreLoadout')
                 end
             end)
+        elseif Config.Admins[group].cloth then 
+            ESX.TriggerServerCallback('esx_skin:getPlayerSkin', function(skin, jobSkin)
+                if not skin then return end 
+                TriggerEvent('skinchanger:loadSkin', skin)
+            end)
         end 
-        ToggleTag(false, false)
         ToggleIds(false, false)
         ToggleSpeed(false, false)
         ToggleGod(false, false)
         ToggleInvisible(false, false)
         ToggleNoragdoll(false, false)
+        tag = false
         duty = false
-        UpdateNui()
     end 
+    UpdateNui()
 end)
 
-function ToggleGod(state, noti) 
-    if duty then 
-        god = state
-        SetPlayerInvincible(PlayerId(), god)
-        if noti then 
-            notify("Halhatatlanság ".. (god and "bekapcsolva" or "kikapcsolva"), (god and "green" or "red"))
+function ToggleGod(state, usenotify) 
+    if not duty then return Config.Notify(_U("no_perm")) end 
+    god = state
+    SetPlayerInvincible(PlayerId(), god)
+    if usenotify then 
+        Config.Notify(_U("god", (god and _U("enabled") or _U("disabled")) ))
+        UpdateNui()
+    end 
+    CreateThread(function()
+        while god do
+            Wait(3000)
+            local player = PlayerId()
+            if not GetPlayerInvincible(player) then 
+                SetPlayerInvincible(player, true)
+            end
+        end
+    end)
+end 
+
+function ToggleTag(state, usenotify) 
+    if not duty then return Config.Notify(_U("no_perm")) end 
+    tag = state
+    TriggerServerEvent('villamos_aduty:setTag', tag)
+    if usenotify then 
+        Config.Notify(_U("tag", (tag and _U("enabled") or _U("disabled")) ))
+        UpdateNui()
+    end 
+end 
+
+function ToggleIds(state, usenotify) 
+    if not duty then return Config.Notify(_U("no_perm")) end 
+    ids = state
+    if not ids then 
+        for _, v in pairs(gamertags) do 
+            RemoveMpGamerTag(v.tag)
         end 
-        CreateThread(function()
-            while god do
-                Wait(1000)
-                local player = PlayerId()
-                if not GetPlayerInvincible(player) then 
-                    SetPlayerInvincible(player, true)
+        gamertags = {}
+    end 
+    if usenotify then 
+        Config.Notify(_U("ids", (ids and _U("enabled") or _U("disabled")) ))
+        UpdateNui()
+    end 
+    CreateThread(function()
+        while ids do
+            for i = 0, 255 do
+                if NetworkIsPlayerActive(i) then
+                    local ped = GetPlayerPed(i)
+
+                    if not gamertags[i] or gamertags[i].ped ~= ped or not IsMpGamerTagActive(gamertags[i].tag) then
+                        local nameTag = ('%s [%d]'):format(GetPlayerName(i), GetPlayerServerId(i))
+                
+                        if gamertags[i] then
+                            RemoveMpGamerTag(gamertags[i].tag)
+                        end
+                
+                        gamertags[i] = {
+                            tag = CreateFakeMpGamerTag(ped, nameTag, false, false, '', 0),
+                            ped = ped
+                        }
+                        SetMpGamerTagName(gamertags[i].tag, nameTag)
+                        SetMpGamerTagAlpha(gamertags[i].tag, 2, 255)
+                    end
+              
+                    SetMpGamerTagVisibility(gamertags[i].tag, 0, true)
+                    SetMpGamerTagVisibility(gamertags[i].tag, 2, true)
+                elseif gamertags[i] then
+                    RemoveMpGamerTag(gamertags[i].tag)
+                    gamertags[i] = nil
                 end
             end
-        end)
-    else 
-        notify("Nincs hozzá jogosultságod!")
-    end 
-    UpdateNui()
+            Wait(1000)
+        end
+    end)
 end 
 
-function ToggleTag(state, noti) 
-    if duty then 
-        tag = state
-        TriggerServerEvent('villamos_aduty:setTag', tag)
-        if noti then 
-            notify("Admin tag " .. (tag and "bekapcsolva" or "kikapcsolva"), (tag and "green" or "red"))
-        end 
-    else 
-        notify("Nincs hozzá jogosultságod!")
+function ToggleSpeed(state, usenotify) 
+    if not duty then return Config.Notify(_U("no_perm")) end 
+    speed = state
+    SetRunSprintMultiplierForPlayer(PlayerId(), speed and 1.4 or 1.0)
+    if usenotify then 
+        Config.Notify(_U("speed", (speed and _U("enabled") or _U("disabled")) ))
+        UpdateNui()
     end 
-    UpdateNui()
+    CreateThread(function()
+        while speed do
+            Wait(1)
+            SetSuperJumpThisFrame(PlayerId())
+        end
+    end)
 end 
 
-function ToggleIds(state, noti) 
-    if duty then 
-        ids = state
-        if noti then 
-            notify("ID-k ".. (ids and "bekapcsolva" or "kikapcsolva"), (ids and "green" or "red"))
-        end 
-        CreateThread(function()
-            while ids do
-                Wait(3)
-                for id = 0, 256 do
-                    if NetworkIsPlayerActive(id) and playerids[id] then
-                        local pped = GetPlayerPed(id)
-                        local x, y, z = table.unpack(GetEntityCoords(pped))
-                        DrawText3D(x, y, z, "["..GetPlayerServerId(id).."] "..GetPlayerName(id).."~n~❤️: "..GetEntityHealth(pped), 255, 255, 255, 0.3)
-                    end  
-                end
-            end
-        end)
-    else 
-        notify("Nincs hozzá jogosultságod!")
+function ToggleInvisible(state, usenotify) 
+    if not duty then return Config.Notify(_U("no_perm")) end 
+    invisible = state
+    SetEntityVisible(PlayerPedId(), not invisible)
+    if usenotify then 
+        Config.Notify(_U("invisible", (invisible and _U("enabled") or _U("disabled")) ))
+        UpdateNui()
     end 
-    UpdateNui()
 end 
 
-function ToggleSpeed(state, noti) 
-    if duty then 
-        speed = state
-        SetRunSprintMultiplierForPlayer(PlayerId(), speed and 1.4 or 1.0)
-        if noti then 
-            notify("Gyorsaság ".. (speed and "bekapcsolva" or "kikapcsolva"), (speed and "green" or "red"))
-        end 
-        CreateThread(function()
-            while speed do
-                Wait(0)
-                SetSuperJumpThisFrame(PlayerId())
-            end
-        end)
-    else 
-        notify("Nincs hozzá jogosultságod!")
+function ToggleNoragdoll(state, usenotify) 
+    if not duty then return Config.Notify(_U("no_perm")) end 
+    noragdoll = state
+    SetPedCanRagdoll(PlayerPedId(), not noragdoll)
+    if usenotify then 
+        Config.Notify(_U("no_ragdoll", (noragdoll and _U("enabled") or _U("disabled")) ))
+        UpdateNui()
     end 
-    UpdateNui()
 end 
 
-function ToggleInvisible(state, noti) 
-    if duty then 
-        invisible = state
-        SetEntityVisible(GetPlayerPed(-1), not invisible)
-        if noti then 
-            notify("Látahatlanság ".. (invisible and "bekapcsolva" or "kikapcsolva"), (invisible and "green" or "red"))
-        end 
-    else 
-        notify("Nincs hozzá jogosultságod!")
+function ActionCoords(format) 
+    if not duty then return Config.Notify(_U("no_perm")) end 
+    local ped = PlayerPedId()
+    local coords = GetEntityCoords(ped)
+    local heading = GetEntityHeading(ped)
+    local text = "vector3("..coords.x..", "..coords.y..", "..coords.z..")"
+    if format == "vec4" then 
+        text = "vector4("..coords.x..", "..coords.y..", "..coords.z..", "..heading..")"
+    elseif format == "obj3" then 
+        text = "{ x = "..coords.x..", y = "..coords.y..", z = "..coords.z.." }"
+    elseif format == "obj4" then 
+        text = "{ x = "..coords.x..", y = "..coords.y..", z = "..coords.z..", h = "..heading.."}"
+    elseif format == "json3" then 
+        text = '{ "x" : '..coords.x..', "y" : '..coords.y..', "z" : '..coords.z..' }'
+    elseif format == "json4" then 
+        text = '{ "x" : '..coords.x..', "y" : '..coords.y..', "z" : '..coords.z..', "h" : '..heading..'}'
     end 
-    UpdateNui()
-end 
-
-function ToggleNoragdoll(state, noti) 
-    if duty then 
-        noragdoll = state
-        SetPedCanRagdoll(GetPlayerPed(-1), not noragdoll)
-        if noti then 
-            notify("No Ragdoll ".. (noragdoll and "bekapcsolva" or "kikapcsolva"), (noragdoll and "green" or "red"))
-        end 
-    else 
-        notify("Nincs hozzá jogosultságod!")
+    if not isInUi then 
+        SetNuiFocus(true, true)
     end 
-    UpdateNui()
-end 
-
-function ActionCoords() 
-    if duty then 
-        local x, y, z = table.unpack(GetEntityCoords(GetPlayerPed(-1)))
-        SendNUIMessage({
-            type = "copy",
-            copy = "vector3("..x..", "..y..", "..z..")"
-        })
-        notify("Koordináták kimásolva!", "green")
-    else 
-        notify("Nincs hozzá jogosultságod!")
+    SendNUIMessage({
+        type = "copy",
+        copy = text
+    })
+    Wait(300)
+    if not isInUi then 
+        SetNuiFocus(false, false)
     end 
+    Config.Notify(_U("coords_copied"))
 end 
 
 function ActionHeal() 
-    if duty then 
-        local ped = PlayerPedId()
-        TriggerEvent('esx_status:set', 'hunger', 1000000)
-        TriggerEvent('esx_status:set', 'thirst', 1000000)
-        SetEntityHealth(ped, GetEntityMaxHealth(ped))
-        notify("Meggyógyítva!", "green")
-    else 
-        notify("Nincs hozzá jogosultságod!")
-    end 
+    if not duty then return Config.Notify(_U("no_perm")) end 
+    local ped = PlayerPedId()
+    TriggerEvent('esx_status:set', 'hunger', 1000000)
+    TriggerEvent('esx_status:set', 'thirst', 1000000)
+    SetEntityHealth(ped, GetEntityMaxHealth(ped))
+    Config.Notify(_U("healed"))
 end 
 
 function ActionMarker()
-    if duty then 
-        local WaypointHandle = GetFirstBlipInfoId(8)
-        if DoesBlipExist(WaypointHandle) then
-            local waypointCoords = GetBlipInfoIdCoord(WaypointHandle)
-
-            for height = 1, 1000 do
-                SetPedCoordsKeepVehicle(PlayerPedId(), waypointCoords["x"], waypointCoords["y"], height + 0.0)
-
-                local foundGround, zPos = GetGroundZFor_3dCoord(waypointCoords["x"], waypointCoords["y"], height + 0.0)
-
-                if foundGround then
-                    break
-                end
-
-                Wait(5)
-            end
-            notify("Elteleportálva!", "green")
-        else
-            notify("Nincs kijelölve semmi!", "red")
+    if not duty then return Config.Notify(_U("no_perm")) end 
+    local ped = PlayerPedId()
+    local coords = GetEntityCoords(ped)
+    local starttime = GetGameTimer()
+    local WaypointHandle = GetFirstBlipInfoId(8)
+    if not DoesBlipExist(WaypointHandle) then return Config.Notify(_U("no_waypoint")) end 
+    local waypointCoords = GetBlipInfoIdCoord(WaypointHandle)
+    local _, zPos = GetGroundZFor_3dCoord(waypointCoords.x, waypointCoords.y, 999.0)
+    SetPedCoordsKeepVehicle(ped, waypointCoords.x, waypointCoords.y, zPos+2.0)
+    FreezeEntityPosition(ped, true)
+    while not HasCollisionLoadedAroundEntity(ped) do
+        RequestCollisionAtCoord(waypointCoords.x, waypointCoords.y, zPos)
+        if (GetGameTimer() - starttime) > 1000 then
+            SetPedCoordsKeepVehicle(ped, coords.x, coords.y, coords.z+2.0)
+            break
         end
-    else 
-        notify("Nincs hozzá jogosultságod!")
-    end 
+        Wait(1)
+    end
+    FreezeEntityPosition(ped, false)
+    Config.Notify(_U("teleported"))
 end 
+
 
 CreateThread(function()
-    while true do
-	local sleep = 500
-        for id, data in pairs(adminok) do
-            local lid = GetPlayerFromServerId(id)
-            local pped = GetPlayerPed(lid)
-            if playerids[lid] then
-		sleep = 1
-                local x, y, z = table.unpack(GetEntityCoords(pped))
-                DrawText3D(x, y, z+1.0, data.label, data.color.r, data.color.g, data.color.b, 0.5)
-                DrawMarker(9, x, y, z+1.45, 0.0, 0.0, 0.0, 90.0, 90.0, 0.0, 1.0, 1.0, 1.0, 255, 255, 255, 255, true, false, 2, true, "duty", data.logo, false)
+    local txd = CreateRuntimeTxd("duty")
+    if not HasStreamedTextureDictLoaded("duty") then
+        return print("^1SCRIPT ERROR: Can't create texture dict 'duty'")
+    end 
+    for i=1, #Config.Icons do
+		CreateRuntimeTextureFromImage(txd, Config.Icons[i], "icons/"..Config.Icons[i]..".png")
+	end
+    for k, v in pairs(Config.Admins) do 
+        if v.logo and not GetTextureResolution("duty", v.logo) then 
+            return print("^1SCRIPT ERROR: A texture ("..v.logo..") is missing for group: "..k)
+        end 
+    end 
+    while true do 
+        local coords = GetEntityCoords(PlayerPedId())
+        nearadmins = {}
+        for id, data in pairs(admins) do
+            local player = GetPlayerFromServerId(id)
+            local ped = GetPlayerPed(player)
+            if ped ~= 0 and #(coords - GetEntityCoords(ped)) < 30 then 
+                nearadmins[id] = data
+                nearadmins[id].ped = ped
             end
         end
-	Wait(sleep)
-    end
-end)
 
-Citizen.CreateThread(function()
-    while true do
-        Citizen.Wait(1000)
-        local ped = PlayerPedId()
-        local coords = GetEntityCoords(ped, true)
-        for id = 0, 256 do
-            if NetworkIsPlayerActive(id) then
-                local pped = GetPlayerPed(id)
-                if #(coords - GetEntityCoords(GetPlayerPed(id))) < 20 then 
-                    playerids[id] = true
-                else
-                    playerids[id] = false
-                end
-            end  
-        end
-    end
-end)
-
-RegisterNetEvent('villamos_aduty:sendData')
-AddEventHandler('villamos_aduty:sendData', function(recData)
-    adminok = recData
-end)
-
-RegisterNetEvent('villamos_aduty:notify')
-AddEventHandler('villamos_aduty:notify', function(msg)
-    notify(msg)
-end)
-
-function DrawText3D(x, y, z, text, r, g, b, scl) 
-    local onScreen,_x,_y=World3dToScreen2d(x,y,z)
-    local px,py,pz=table.unpack(GetGameplayCamCoords())
-    local dist = GetDistanceBetweenCoords(px,py,pz, x,y,z, 1)
-
-    local scale = (1/dist)*2
-    local fov = (1/GetGameplayCamFov())*100
-    local scale = scale*fov
-    
-    if onScreen then
-        SetTextScale(0.0, scl*scale)
-        SetTextFont(4)
-        SetTextColour(r, g, b, 255)
-        SetTextCentre(1)
-        BeginTextCommandDisplayText("STRING")
-	    AddTextComponentString(text)
-	    EndTextCommandDisplayText(_x, _y)
-    end
-end
-
-function notify(msg, color)
-    if not color then 
-        color = ""
-    elseif color == "green" then 
-        color = "~g~ "
-    elseif color == "red" then 
-        color = "~r~ "
+        if next(nearadmins) and not adminthread then 
+            CreateThread(function()
+                adminthread = true 
+                while next(nearadmins) do 
+                    for _, data in pairs(nearadmins) do 
+                        local headcoords = GetWorldPositionOfEntityBone(data.ped, GetPedBoneIndex(data.ped, 31086))
+                        DrawText3D(headcoords+vector3(0.0, 0.0, 0.4), data.label, data.color)
+                        if data.logo then 
+                            DrawMarker(9, headcoords+vector3(0.0, 0.0, 0.7), 0.0, 0.0, 0.0, 90.0, 90.0, 0.0, 1.0, 1.0, 1.0, 255, 255, 255, 255, true, false, 2, true, "duty", data.logo, false)
+                        end 
+                    end 
+                    Wait(3)
+                end 
+                adminthread = false 
+            end)
+        end 
+        
+        Wait(1000)
     end 
-    ESX.ShowNotification(color .. msg)
-end 
+end)
+
+RegisterNetEvent('villamos_aduty:sendData', function(data)
+    admins = data
+end)
+
+function DrawText3D(coords, text, color) 
+    SetDrawOrigin(coords)
+    SetTextScale(0.0, 0.4)
+    SetTextFont(4)
+    SetTextColour(color.r, color.g, color.b, 255)
+    SetTextCentre(1)
+    SetTextOutline()
+    BeginTextCommandDisplayText("STRING")
+	AddTextComponentString(text)
+	EndTextCommandDisplayText(0, 0)
+    ClearDrawOrigin()
+end

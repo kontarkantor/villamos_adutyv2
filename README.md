@@ -19,7 +19,7 @@ A többi parancs ki/bekapcsolható configba.<br/>
 /adheal<br/>
 /admarker<br/>
 # Előnézet
-[YouTube](https://youtu.be/nnhGEO0Rd60)
+[YouTube](https://youtu.be/bfFSfZORnC8)
 # Marvel Studios
 [Discord](https://discord.gg/esnawXn5q5) <br/>
 [YouTube](https://www.youtube.com/channel/UCEluDSZ6Y4fBB8OkKzcVx8A)
