@@ -431,7 +431,7 @@ CreateThread(function()
         for id, data in pairs(admins) do
             local player = GetPlayerFromServerId(id)
             local ped = GetPlayerPed(player)
-            if ped ~= 0 and #(coords - GetEntityCoords(ped)) < 30 then 
+            if player ~= -1 and ped ~= 0 and #(coords - GetEntityCoords(ped)) < 30 then 
                 nearadmins[id] = data
                 nearadmins[id].ped = ped
             end
