@@ -94,7 +94,7 @@ function LogToDiscord(name, duty, alltime, time)
         {
             ["color"] = (duty and 27946 or 10616832),
             ["title"] = "**".. name .."**",
-            ["description"] = (duty and _U("went_offduty", name) or _U("went_onduty", name)),
+            ["description"] = (duty and _U("went_onduty", name) or _U("went_offduty", name)),
             ["fields"] = {
                 {
                     ["name"] = _U("alltime"),
