@@ -3,14 +3,14 @@ Optimized Admin Duty with panel, if you like my work, join our [Discord](https:/
 # Preview
 [YouTube](https://youtu.be/bfFSfZORnC8)
 # Features
--NUI panel
--Easy permission system
--Admin tag based on group or on discord roles
--Discord log
--Count duty time
--Server logo over admins head
--Clothes or ped on duty
--On/off switchable admin tag, player ids, god mode, speed run, invisibility, anti ragdoll, copy coords, heal, teleport to marker
+-NUI panel <br/>
+-Easy permission system <br/>
+-Admin tag based on group or on discord roles <br/>
+-Discord log <br/>
+-Count duty time <br/>
+-Server logo over admins head <br/>
+-Clothes or ped on duty <br/>
+-On/off switchable admin tag, player ids, god mode, speed run, invisibility, anti ragdoll, copy coords, heal, teleport to marker <br/>
 # Usage
 By default, you can open the panel with O (or /admenu), but it can be binded to any key in settings!
 Discord roles
