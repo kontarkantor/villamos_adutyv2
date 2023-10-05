@@ -1,6 +1,6 @@
 Config = {}
 
-Config.Locale = "hu" -- en, hu
+Config.Locale = "en" -- en, hu
 
 Config.Commands = true
 
