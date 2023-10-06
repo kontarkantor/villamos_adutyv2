@@ -113,7 +113,7 @@ function LogToDiscord(name, duty, alltime, time)
                 ["icon_url"] = "https://cdn.discordapp.com/attachments/917181033626087454/954753156821188658/marvel1.png"
             },
             ["footer"] = {
-                ["text"] = "villamos_aduty :)",
+                ["text"] = os.date("%Y-%m-%d %X").." | villamos_aduty :)",
             },
         }
     }
