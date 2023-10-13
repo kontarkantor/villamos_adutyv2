@@ -1,5 +1,8 @@
 # [ESX] Admin Duty V2 (NEW VERSION) | villamos_adutyv2
 Optimized Admin Duty with panel, if you like my work, join our [Discord](https://discord.gg/esnawXn5q5)
+# Marvel Studios
+[Discord](https://discord.gg/esnawXn5q5) <br/>
+[YouTube](https://www.youtube.com/channel/UCEluDSZ6Y4fBB8OkKzcVx8A)
 # Preview
 [YouTube](https://youtu.be/bfFSfZORnC8)
 # Features
@@ -28,6 +31,3 @@ The following commands can be disabled in config:<br/>
 /adcoords<br/>
 /adheal<br/>
 /admarker<br/>
-# Marvel Studios
-[Discord](https://discord.gg/esnawXn5q5) <br/>
-[YouTube](https://www.youtube.com/channel/UCEluDSZ6Y4fBB8OkKzcVx8A)
