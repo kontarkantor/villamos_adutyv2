@@ -332,6 +332,9 @@ function ToggleInvisible(state, usenotify)
     if not duty then return Config.Notify(_U("no_perm")) end 
     invisible = state
     SetEntityVisible(PlayerPedId(), not invisible)
+    if not invisible and tag then 
+	ToggleTag(false, true)
+    end 
     if usenotify then 
         Config.Notify(_U("invisible", (invisible and _U("enabled") or _U("disabled")) ))
         UpdateNui()
