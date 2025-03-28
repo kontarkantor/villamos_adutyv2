@@ -3,7 +3,7 @@ const App = Vue.createApp({
       return {
         opened : false,
         players : [
-            {id:1, name:"6osvillamos", group:"admin", job:"Rendőr"},
+            {id:1, name:"6osvillamos", group:"admin", job:"Rendőr - Kadét", bank:1500, Penz:999999},
         ],
         state : {
             group:"user",
@@ -36,6 +36,11 @@ const App = Vue.createApp({
             nui_players_name:"Name",
             nui_players_group:"Group",
             nui_players_job:"Job",
+            nui_players_bank:"Bank",
+            nui_players_Penz:"Pénz",
+            nui_players_kick:"Kick",
+            nui_players_goto:"Goto",
+            nui_players_bring:"Bring",
             nui_players_spectate:"Spectate",
         },
 
@@ -100,6 +105,30 @@ const App = Vue.createApp({
             setTimeout(() => {
                 appelement.style.display = "none";
             }, 500);
+        },
+        kick(id) {
+            fetch(`https://${GetParentResourceName()}/kick`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    id : id
+                })
+            });
+        },
+        goto(id) {
+            fetch(`https://${GetParentResourceName()}/goto`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    id : id
+                })
+            });
+        },
+        bring(id) {
+            fetch(`https://${GetParentResourceName()}/bring`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    id : id
+                })
+            });
         },
         close() {
             fetch(`https://${GetParentResourceName()}/exit`);
@@ -211,17 +240,11 @@ const Ap1p = Vue.createApp({
             nui_clothing_menu:"Clothing Menu SELECTION",
         },
         clothingItems: [ 
-            {id:"admin", name: "Sárga"},
-            {id:"admin1", name: "Zöld"},
-            {id:"admin2", name: "Narancs"},
-            {id:"admin3", name: "Kék"},
-            {id:"admin4", name: "Pink"},
-            {id:"admin5", name: "Piros"},
-            {id:"admin6", name: "Lightblue"},
-            {id:"admin7", name: "Szürke"},
-            {id:"admin8", name: "Creme"},
-            {id:"admin9", name: "Fehér"},
-            {id:"admin10", name: "None"}
+            {id:"admin", name: "Jézus"},
+            {id:"admin1", name: "Lamar"},
+            {id:"admin2", name: "Franklin"},
+            {id:"admin3", name: "Trevor"},
+            {id:"admin4", name: "Michel"}
         ],
     }
     },

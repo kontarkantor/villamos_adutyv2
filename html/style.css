@@ -5,14 +5,13 @@ body {
 }
 #app {
     display: none;
-
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
 
-    width: 40%;
-    height: 70%;
+    width: 68%;
+    height: 45%;
 
     background-color: #1d1f25;
 
@@ -46,13 +45,113 @@ body {
     display: flex;
     flex-direction: row;
     align-items: center;
-    width: 70%;
+    width: 90%;
     padding: 3px;
     background-color: #282a30;
     border-radius: 4px;
 }
 .container .row * {
     width:50%;
+}
+
+.container .bigrow {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-start; 
+    gap: 10px; 
+    width: 100%;
+    padding: 10px;
+    background-color: #282a30;
+    max-width: 84%;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+
+
+.bigrow .kocka {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; 
+    background-color: #3a3d45;
+    border-radius: 4px;
+    padding: 10px 15px;
+    color: white;
+    text-align: left;
+    height: 50px;
+    width: calc((100% / 6) - 10px); 
+    box-sizing: border-box;
+    cursor: pointer;
+    transition: background-color 0.2s ease; 
+}
+
+.bigrow .kocka i {
+    font-size: 1.2em;
+    margin-right: 8px;
+}
+
+.bigrow .kocka:hover {
+    background-color: #4a4d55;
+}
+
+.bigrow .kocka:disabled,
+.bigrow .kocka.disabled {
+    opacity: 0.6; 
+    cursor: not-allowed;
+}
+
+.bigrow .kocka .click-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px;
+
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+
+.bigrow .kocka .click-action:hover {
+    background-color: rgba(255, 255, 255, 0.2); 
+}
+
+.fons {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; 
+    background-color: #3a3d45;
+    border-radius: 4px;
+    padding: 10px 15px;
+    color: white;
+    text-align: left;
+    height: 50px;
+    width: calc((100% / 6) - 10px); 
+    box-sizing: border-box;
+    border: 4.5px solid #282a30;
+    cursor: pointer;
+    transition: background-color 0.2s ease; 
+    position: absolute; 
+    top: 3.89%;            
+    left: 7.89%;           
+}
+
+.fons1 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; 
+    background-color: #3a3d45;
+    border-radius: 4px;
+    padding: 10px 15px;
+    color: white;
+    text-align: left;
+    height: 50px;
+    width: calc((100% / 6) - 10px); 
+    box-sizing: border-box;
+    border: 4.5px solid #282a30;
+    cursor: pointer;
+    transition: background-color 0.2s ease; 
+    position: absolute; 
+    top: 3.89%;            
+    right: 7.89%;           
 }
 
 
@@ -132,6 +231,11 @@ body {
     font-size: 120%;
 }
 .player-data {
+    cursor: pointer;
+}
+.player-data:hover {
+    background-color: #1c91b48c;
+    border-radius: 25px;
     cursor: pointer;
 }
 input[type="checkbox"] {

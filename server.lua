@@ -4,7 +4,6 @@ local dutyTimes = json.decode(LoadResourceFile(GetCurrentResourceName(), "data.j
 local useOkokChat = GetResourceState('okokChat') == 'started'
 local isAdminLoggingEnabled = Config.ChatLogs
 
-
 function GetAdmins()
     local admins = {}
     for _, playerId in ipairs(ESX.GetPlayers()) do
@@ -18,6 +17,8 @@ end
 
 
 local function sendAdminLog(admin, title, message, target)
+    local xPlayer = ESX.GetPlayerFromId(source)
+    if not xPlayer or not inDuty[xPlayer.source] then return end
     if not isAdminLoggingEnabled then return end
     local background = 'linear-gradient(90deg, rgba(42, 42, 42, 0.9) 0%, rgba(53, 219, 194, 0.9) 100%)'
     local color = '#35dbc2'
@@ -53,6 +54,21 @@ AddEventHandler('villamos_aduty:sendlog', function(uzi)
     end
 end)
 
+lib.callback.register('villamos_aduty:getAllJobs', function(source)
+    local players = ESX.GetPlayers()
+    local jobs = {}
+
+    for _, playerId in ipairs(players) do
+        local xPlayer = ESX.GetPlayerFromId(playerId)
+        if xPlayer then
+            local jobName = xPlayer.job.label .. " - " .. xPlayer.job.grade_label
+            table.insert(jobs, {id = playerId, job = jobName}) 
+        end
+    end
+
+    return jobs
+end)
+
 
 ESX.RegisterServerCallback("villamos_aduty:openPanel", function(source, cb)
     local xAdmin = ESX.GetPlayerFromId(source)
@@ -67,7 +83,9 @@ ESX.RegisterServerCallback("villamos_aduty:openPanel", function(source, cb)
                 id = xPlayer.source,
                 name = GetPlayerName(xPlayer.source),
                 group = xPlayer.getGroup(),
-                job = xPlayer.getJob().label
+                job = xPlayer.getJob().label .. " - " .. xPlayer.getJob().grade_label,
+                Penz = xPlayer.getMoney(),
+                bank = xPlayer.getAccount("bank").money
             }
         end 
     end
@@ -87,14 +105,15 @@ RegisterNetEvent('villamos_aduty:setDutya', function(enable)
     local xPlayer = ESX.GetPlayerFromId(source)
     if inDuty[xPlayer.source] then 
         TriggerClientEvent("villamos_aduty:setDuty", xPlayer.source, false, inDuty[xPlayer.source].group)
+        local group = Config.DiscordTags and GetDiscordRole(xPlayer.source) or xPlayer.getGroup()
         if tags[xPlayer.source] then 
             tags[xPlayer.source] = nil
             TriggerClientEvent("villamos_aduty:sendData", -1, tags)
         end 
         local dutyMinutes = math.floor((os.time() - inDuty[xPlayer.source].start) / 60)
         inDuty[xPlayer.source] = nil
-        TriggerServerEvent("villamos_aduty:sendlog", _U("went_offduty", GetPlayerName(xPlayer.source)))
-        Config.Notify(-1, _U("went_offduty", GetPlayerName(xPlayer.source)))
+        TriggerEvent("villamos_aduty:sendlog", Config.Admins[group].tag .." ".._U("went_offduty", GetPlayerName(xPlayer.source)))
+        Config.Notify(-1, Config.Admins[group].tag .." ".._U("went_offduty", GetPlayerName(xPlayer.source)))
 
 
 
@@ -108,13 +127,13 @@ RegisterNetEvent('villamos_aduty:setDutya', function(enable)
 
         inDuty[xPlayer.source] = {
             ped = Config.Admins[group].ped,
-            tag = { label = Config.Admins[group].tag .. " " .. GetPlayerName(xPlayer.source), color = Config.Admins[group].color, logo = Config.Admins[group].logo },
+            tag = { label = Config.Admins[group].tag .. "~w~ | " .. GetPlayerName(xPlayer.source), color = Config.Admins[group].color, logo = Config.Admins[group].logo },
             group = group,
             start = os.time()
         }
         TriggerClientEvent("villamos_aduty:setDuty", xPlayer.source, true, group)
-        Config.Notify(-1, _U("went_onduty", GetPlayerName(xPlayer.source)))
-        TriggerEvent("villamos_aduty:sendlog", _U("went_onduty", GetPlayerName(xPlayer.source)))
+        Config.Notify(-1, Config.Admins[group].tag .." ".._U("went_onduty", GetPlayerName(xPlayer.source)))
+        TriggerEvent("villamos_aduty:sendlog", Config.Admins[group].tag .." ".._U("went_onduty", GetPlayerName(xPlayer.source)))
 
 
         tags[xPlayer.source] = inDuty[xPlayer.source].tag
@@ -256,6 +275,11 @@ end, false)
 -- Spectate triggerek
 RegisterNetEvent('villamos_aduty:sendcoord')
 AddEventHandler('villamos_aduty:sendcoord', function(targetServerId)
+    local xPlayer = ESX.GetPlayerFromId(source)
+    if not xPlayer then return end
+    local group = Config.DiscordTags and GetDiscordRole(xPlayer.source) or xPlayer.getGroup()
+    if not group or not Config.Admins[group] then return Config.Notify(xPlayer.source, _U("cant_duty")) end 
+
     local xTarget = ESX.GetPlayerFromId(targetServerId)
     if xTarget then
         local targetPed = GetPlayerPed(xTarget.source)
@@ -263,4 +287,30 @@ AddEventHandler('villamos_aduty:sendcoord', function(targetServerId)
         TriggerClientEvent('villamos_aduty:getcoords', source, coord)
     else
     end
+end)
+
+RegisterNetEvent("villamos_aduty:kick")
+AddEventHandler("villamos_aduty:kick", function(targetServerId)
+    local xPlayer = ESX.GetPlayerFromId(source)
+    if not xPlayer or not inDuty[xPlayer.source] then return Config.Notify(xPlayer.source, _U("no_perm")) end
+    DropPlayer(targetServerId, "Egy Adminisztrátor ki kickelt!")
+    --print("kicked" .. targetServerId)
+end)
+
+RegisterNetEvent("villamos_aduty:goto")
+AddEventHandler("villamos_aduty:goto", function(targetServerId)
+    local xPlayer = ESX.GetPlayerFromId(source)
+    local xTarget = ESX.GetPlayerFromId(targetServerId)
+    if not xPlayer or not xTarget or not inDuty[xPlayer.source] then return Config.Notify(xPlayer.source, _U("no_perm")) end
+    local coords = xTarget.getCoords(true)
+    xPlayer.setCoords(coords)
+end)
+
+RegisterNetEvent("villamos_aduty:bring")
+AddEventHandler("villamos_aduty:bring", function(targetServerId)
+    local xPlayer = ESX.GetPlayerFromId(source)
+    local xTarget = ESX.GetPlayerFromId(targetServerId)
+    if not xPlayer or not xTarget or not inDuty[xPlayer.source] then return Config.Notify(xPlayer.source, _U("no_perm")) end
+    local coords = xPlayer.getCoords(true)
+    xTarget.setCoords(coords)
 end)

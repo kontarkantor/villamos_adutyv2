@@ -9,7 +9,7 @@ Config.Notify = function(src, msg)
     if Config.Notifye == "esx" then
         TriggerClientEvent("esx:showNotification", src, msg)
     elseif Config.Notifye == "ox" then
-        TriggerClientEvent('ox_lib:notify', source, {
+        TriggerClientEvent('ox_lib:notify', src, {
             title = 'Admin Rendszer',
             description = msg,
             type = 'info'

@@ -1,5 +1,6 @@
 local admins = {}
 local nearadmins = {}
+local playerJobs = {}
 local gamertags = {}
 local adminthread = false
 local isInUi = false
@@ -12,6 +13,7 @@ local god = false
 local speed = false
 local invisible = false
 local noragdoll = false
+local idsThread = nil  
 
 local Spectating = false
 local position21 = vec3(-75.2335, -819.5386, 326.1751)
@@ -53,29 +55,50 @@ RegisterNUICallback('exit', function(data, cb)
 end)
 
 RegisterNUICallback('backclothing', function(data, cb)
-    TriggerEvent('skinchanger:getSkin', function(skin) if not skin then return end TriggerEvent('skinchanger:loadSkin', skin)end)
+    ESX.TriggerServerCallback('esx_skin:getPlayerSkin', function(skin)
+        if not skin then return end 
+        TriggerEvent('skinchanger:loadSkin', skin)
+    end) 
     cb('ok')
 end)
 
 RegisterNUICallback('clothing', function(data, cb)
     local name = data.name
     local id = data.id
-    local clothes = Config.Clothes[id]
-    if not clothes then return end
-    
-    TriggerEvent('skinchanger:getSkin', function(skin)
-        if not skin then return end
-        
-        local clothingSet = skin.sex == 1 and clothes.female or clothes.male
-        if clothingSet then
-            TriggerEvent('skinchanger:loadClothes', skin, clothingSet)
-        end
-    end)
-    
+    local model = Config.Peds[id]
+    if IsModelInCdimage(model) and IsModelValid(model) then
+      RequestModel(model)
+      while not HasModelLoaded(model) do
+        Wait(0)
+      end
+      SetPlayerModel(PlayerId(), model)
+      SetModelAsNoLongerNeeded(model)
+    end
     cb('ok')
 end)
 
 -- SPECTATE
+-- Többi
+RegisterNuiCallback("kick", function(data, cb)
+    local id = data.id
+    if id then
+        TriggerServerEvent("villamos_aduty:kick", id)
+    end
+end)
+RegisterNuiCallback("goto", function(data)
+    local id = data.id
+    if id then
+        TriggerServerEvent("villamos_aduty:goto", id)
+    end
+end)
+RegisterNuiCallback("bring", function(data)
+    local id = data.id
+    if id then
+        TriggerServerEvent("villamos_aduty:bring", id)
+    end
+end)
+-- Többi
+
 local coords = nil
 RegisterNetEvent("villamos_aduty:getcoords")
 AddEventHandler("villamos_aduty:getcoords", function(coord)
@@ -88,7 +111,7 @@ local lastposition = nil
 function SpectatePlayer(targetServerId)
     local playerServerId = GetPlayerServerId(PlayerId())
     if not duty then return Config.Notify(_U("no_perm")) end
-    --if tonumber(playerServerId) == tonumber(targetServerId) then return Config.Notify(_U("cant_spectate_self")) end
+    if tonumber(playerServerId) == tonumber(targetServerId) then return Config.Notify(_U("cant_spectate_self")) end
 
     Spectating = not Spectating
     if Spectating then
@@ -318,9 +341,9 @@ RegisterNetEvent('villamos_aduty:setDuty', function(state, group)
         elseif Config.Admins[group].cloth then 
             TriggerEvent('skinchanger:getSkin', function(skin)
                 if not skin then return end 
-                --[[local clothes = (skin.sex == 1 and Config.Admins[group].cloth.female or Config.Admins[group].cloth.male)
+                local clothes = (skin.sex == 1 and Config.Admins[group].cloth.female or Config.Admins[group].cloth.male)
                 print(json.encode(clothes))
-                TriggerEvent('skinchanger:loadSkin', clothes)]]
+                TriggerEvent('skinchanger:loadSkin', clothes)
                 TriggerEvent('skinchanger:loadClothes', skin, (skin.sex == 1 and Config.Admins[group].cloth.female or Config.Admins[group].cloth.male))
             end)
         end 
@@ -360,20 +383,13 @@ end)
 function ToggleGod(state, usenotify) 
     if not duty then return Config.Notify(_U("no_perm")) end 
     god = state
-    SetPlayerInvincible(PlayerId(), god)
+    SetEntityInvincible(PlayerPedId(), god)
+    SetEntityProofs(PlayerPedId(), god, god, god, god, god, god, god, god)
+    SetPedCanRagdoll(PlayerPedId(), god)
     if usenotify then 
         Config.Notify(_U("god", (god and _U("enabled") or _U("disabled")) ))
         UpdateNui()
     end 
-    CreateThread(function()
-        while god do
-            Wait(3000)
-            local player = PlayerId()
-            if not GetPlayerInvincible(player) then 
-                SetPlayerInvincible(player, true)
-            end
-        end
-    end)
 end 
 
 function ToggleTag(state, usenotify) 
@@ -386,51 +402,83 @@ function ToggleTag(state, usenotify)
     end 
 end 
 
-function ToggleIds(state, usenotify) 
+
+function ToggleIds(state, usenotify)
     if not duty then return Config.Notify(_U("no_perm")) end 
     ids = state
-    if not ids then 
-        for _, v in pairs(gamertags) do 
-            RemoveMpGamerTag(v.tag)
-        end 
-        gamertags = {}
-    end 
-    if usenotify then 
-        Config.Notify(_U("ids", (ids and _U("enabled") or _U("disabled")) ))
-        UpdateNui()
-    end 
-    CreateThread(function()
-        while ids do
-            for i = 0, 255 do
-                if NetworkIsPlayerActive(i) then
-                    local ped = GetPlayerPed(i)
 
-                    if not gamertags[i] or gamertags[i].ped ~= ped or not IsMpGamerTagActive(gamertags[i].tag) then
-                        local nameTag = ('%s [%d]'):format(GetPlayerName(i), GetPlayerServerId(i))
-                
-                        if gamertags[i] then
-                            RemoveMpGamerTag(gamertags[i].tag)
-                        end
-                
-                        gamertags[i] = {
-                            tag = CreateFakeMpGamerTag(ped, nameTag, false, false, '', 0),
-                            ped = ped
-                        }
-                        SetMpGamerTagName(gamertags[i].tag, nameTag)
-                        SetMpGamerTagAlpha(gamertags[i].tag, 2, 255)
-                    end
-              
-                    SetMpGamerTagVisibility(gamertags[i].tag, 0, true)
-                    SetMpGamerTagVisibility(gamertags[i].tag, 2, true)
-                elseif gamertags[i] then
-                    RemoveMpGamerTag(gamertags[i].tag)
-                    gamertags[i] = nil
-                end
-            end
-            Wait(1000)
+    if not ids then
+        for _, v in pairs(gamertags) do
+            RemoveMpGamerTag(v.tag)
         end
-    end)
-end 
+        gamertags = {}
+
+        if idsThread then
+            TerminateThread(idsThread)
+            idsThread = nil
+        end
+    else
+        if idsThread then return end
+
+        idsThread = CreateThread(function()
+            while ids do
+                lib.callback('villamos_aduty:getAllJobs', false, function(jobs)
+                    playerJobs = {}
+
+                    for _, data in ipairs(jobs) do
+                        local playerId = tonumber(data.id)
+                        playerJobs[playerId] = data.job
+                    end
+
+                    for i = 0, 255 do
+                        if NetworkIsPlayerActive(i) then
+                            local ped = GetPlayerPed(i)
+                            local serverId = tonumber(GetPlayerServerId(i))
+                            local jobInfo = playerJobs[serverId] or "Unknown Job"
+
+                            if gamertags[i] and gamertags[i].job == jobInfo then
+                                goto continue
+                            end
+
+                            if gamertags[i] then
+                                RemoveMpGamerTag(gamertags[i].tag)
+                            end
+
+                            local nameTag = ('%s [%d] %s'):format(GetPlayerName(i), serverId, jobInfo)
+                            local tag = CreateFakeMpGamerTag(ped, nameTag, false, false, '', 0)
+
+                            SetMpGamerTagName(tag, nameTag)
+                            SetMpGamerTagAlpha(tag, 2, 255)
+                            SetMpGamerTagVisibility(tag, 0, true)
+                            SetMpGamerTagVisibility(tag, 2, true)
+
+                            gamertags[i] = {
+                                tag = tag,
+                                ped = ped,
+                                job = jobInfo
+                            }
+
+                            ::continue::
+                        elseif gamertags[i] then
+                            RemoveMpGamerTag(gamertags[i].tag)
+                            gamertags[i] = nil
+                        end
+                    end
+                end)
+
+                Wait(5000)
+            end
+
+            idsThread = nil
+        end)
+    end
+
+    if usenotify then
+        Config.Notify(_U("ids", (ids and _U("enabled") or _U("disabled"))))
+        UpdateNui()
+    end
+end
+
 
 function ToggleSpeed(state, usenotify) 
     if not duty then return Config.Notify(_U("no_perm")) end 
@@ -566,7 +614,7 @@ CreateThread(function()
                 while next(nearadmins) do 
                     for _, data in pairs(nearadmins) do 
                         local headcoords = GetWorldPositionOfEntityBone(data.ped, GetPedBoneIndex(data.ped, 31086))
-                        DrawText3D(headcoords+vector3(0.0, 0.0, 0.4), data.label, data.color)
+                        DrawText3D(headcoords+vector3(0.0, 0.0, 0.32), data.label, data.color)
                         if data.logo then 
                             DrawMarker(9, headcoords+vector3(0.0, 0.0, 0.7), 0.0, 0.0, 0.0, 90.0, 90.0, 0.0, 1.0, 1.0, 1.0, 255, 255, 255, 255, true, false, 2, true, "duty", data.logo, false)
                         end 
@@ -585,15 +633,34 @@ RegisterNetEvent('villamos_aduty:sendData', function(data)
     admins = data
 end)
 
-function DrawText3D(coords, text, color) 
-    SetDrawOrigin(coords)
-    SetTextScale(0.0, 0.4)
-    SetTextFont(4)
-    SetTextColour(color.r, color.g, color.b, 255)
+function DrawText3D(coords, text, color)
+    local r, g, b = 255, 255, 255
+    
+    if type(color) == "string" then
+        local hex = color:gsub("#", "")
+        if #hex == 6 then
+            r = tonumber(hex:sub(1, 2), 16) or 255
+            g = tonumber(hex:sub(3, 4), 16) or 255
+            b = tonumber(hex:sub(5, 6), 16) or 255
+        end
+    elseif type(color) == "table" and color.r and color.g and color.b then
+        r, g, b = color.r, color.g, color.b
+    elseif type(color) == "table" and #color >= 3 then
+        r, g, b = color[1], color[2], color[3]
+    end
+    
+    r = math.max(0, math.min(255, r))
+    g = math.max(0, math.min(255, g))
+    b = math.max(0, math.min(255, b))
+    
+    SetDrawOrigin(coords.x, coords.y, coords.z)
+    SetTextScale(0.35, 0.35)
+    SetTextFont(6)
+    SetTextColour(r, g, b, 255) 
     SetTextCentre(1)
     SetTextOutline()
     BeginTextCommandDisplayText("STRING")
-	AddTextComponentString(text)
-	EndTextCommandDisplayText(0, 0)
+    AddTextComponentString(text)
+    EndTextCommandDisplayText(0, 0)
     ClearDrawOrigin()
 end

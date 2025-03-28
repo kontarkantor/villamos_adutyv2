@@ -50,9 +50,14 @@ Locales['hu'] = {
     ["nui_players_id"] = "ID",
     ["nui_players_name"] = "Név",
     ["nui_players_group"] = "Rang",
-    ["nui_clothing"] = "Ruha menü", 
+    ["nui_clothing"] = "Admin Ruha", 
     ["nui_clothing_revert"] = "Ruha visszaálítása", 
     ["nui_clothing_menu"] = "Válaszd ki a ruhádat", 
     ["nui_players_job"] = "Munka",
+    ["nui_players_bank"] = "Bank",
+    ["nui_players_kick"] = "Kick",
+    ["nui_players_Penz"] = "Pénz",
+    ["nui_players_goto"] = "Goto",
+    ["nui_players_bring"] = "Bring",
     ["nui_players_spectate"] = "Spectate"
 }
